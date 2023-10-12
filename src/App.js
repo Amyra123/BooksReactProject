@@ -1,31 +1,52 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import BookCreate from "./components/BookCreate"
 import BookList from "./components/BookList";
+import axios from "axios";
 
 function App() {
   const [books,setBooks] = useState([]);
 
-  const deleteBookById = (id) => {
+  // The very moment our app starts, I need to get an updated list of books, since this function needs to run every time we refresh the page or in other words every time a component re renders, we can use useEffect here.
+
+  const fetchBooks = async () => {
+    const response = await axios.get('http://localhost:3001/books');
+    setBooks(response.data);
+  }
+  useEffect(() => {fetchBooks();},[]);
+
+  // If we call the fetchBooks function directly without a useEffect hook, we will end up in an infinite loop.
+
+  const deleteBookById = async (id) => {
+    await axios.delete(`http://localhost:3001/books/${id}`);
     const newBooks = books.filter((book) => {
       return book.id !== id;
     });
     setBooks(newBooks);
   };
 
-  const changeTitleById = (id,title) => {
+  const changeTitleById = async (id,title) => {
+    const response = await axios.put(`http://localhost:3001/books/${id}`,{
+      title
+    });
+    
     const newBooks = books.map((book) => {
       if(book.id === id){
-        return {...book,title};
+        return response.data;
       }
       return book;
     });
     setBooks(newBooks);
   }
 
-  const createBook = (title) => {
+  const createBook = async (title) => {
+    // whenever we make a network request, it is an async function.
+    const response = await axios.post("http://localhost:3001/books",{
+      title,
+    });
+    console.log(response);
     const newBooks = [
       ...books,
-      { id: Math.round(Math.random()*999), title},
+      response.data,
     ];
     setBooks(newBooks);
   };
